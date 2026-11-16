@@ -17,7 +17,7 @@ def norm_word(value):
             continue
         if char in "ٱأإآٲ":
             char = "ا"
-        elif char in "ىيئ":
+        elif char in "ىيئی":
             char = "ي"
         elif char == "ک":
             char = "ك"
