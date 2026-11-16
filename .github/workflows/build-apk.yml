@@ -11,9 +11,19 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+      - name: Prepare 604-page Quran and Tajweed data
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse --branch main https://github.com/ouryhamdalaye/madinah-mushaf-json.git /tmp/madinah-layout
+          git -C /tmp/madinah-layout checkout 507eada48f3ffe26a600acf5792a18ba86d6851e
+          git -C /tmp/madinah-layout sparse-checkout set pages
+          git clone --depth 1 --filter=blob:none --sparse --branch main https://github.com/TheAbubakrAbu/Quran-Tajweed-Engine.git /tmp/quran-tajweed
+          git -C /tmp/quran-tajweed checkout edd7afc0551d4bbbb14416a661534f595c97bb67
+          git -C /tmp/quran-tajweed sparse-checkout set data/quran.json data/tajweed data/tajweed-rules.json
+          python3 scripts/prepare_quran.py --layout /tmp/madinah-layout/pages --engine-data /tmp/quran-tajweed/data
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
