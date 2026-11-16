@@ -69,7 +69,7 @@ class MainActivity : Activity() {
         search = EditText(this).apply {
             hint = "ابحث في نص القرآن"
             textSize = 15f
-            singleLine = true
+            isSingleLine = true
             setTextColor(ink)
             setHintTextColor(Color.GRAY)
             setPadding(14, 8, 14, 8)
@@ -108,7 +108,7 @@ class MainActivity : Activity() {
         root.addView(actions)
 
         scroll = ScrollView(this).apply {
-            fillViewport = true
+            setFillViewport(true)
             isVerticalScrollBarEnabled = true
             setPadding(14, 4, 14, 18)
         }
