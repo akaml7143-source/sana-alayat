@@ -30,4 +30,12 @@ tasks.register('copyQuranAsset', Copy) {
     from(rootProject.file('quran-uthmani-kitab.txt'))
     into(layout.buildDirectory.dir('generated/quranAssets'))
 }
-tasks.named('preBuild').configure { dependsOn('copyQuranAsset') }
+tasks.register('prepareQuranData', Exec) {
+    dependsOn('copyQuranAsset')
+    workingDir rootProject.projectDir
+    commandLine 'python3',
+        rootProject.file('scripts/prepare_quran.py'),
+        '--layout', '/tmp/madinah-layout/pages',
+        '--engine-data', '/tmp/quran-tajweed/data'
+}
+tasks.named('preBuild').configure { dependsOn('prepareQuranData') }
