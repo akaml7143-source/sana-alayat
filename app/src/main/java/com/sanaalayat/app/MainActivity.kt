@@ -176,7 +176,7 @@ class MainActivity : Activity() {
         val page = pages.getJSONObject(currentPage - 1)
         val lines = page.getJSONArray("lines")
         pageContent.removeAllViews()
-        pageLabel.text = "الصفحة \${arabicDigits(currentPage)} من ٦٠٤"
+        pageLabel.text = "الصفحة ${arabicDigits(currentPage)} من ٦٠٤"
         for (index in 0 until lines.length()) {
             val line = lines.getJSONObject(index)
             when (line.getString("type")) {
@@ -272,7 +272,7 @@ class MainActivity : Activity() {
         }
         currentPage = versePages.optInt(index, 1).coerceIn(1, 604)
         renderPage()
-        Toast.makeText(this, "تم العثور على العبارة في الصفحة \${arabicDigits(currentPage)}", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "تم العثور على العبارة في الصفحة ${arabicDigits(currentPage)}", Toast.LENGTH_LONG).show()
     }
 
     private fun showLegend() {
@@ -320,7 +320,7 @@ class MainActivity : Activity() {
     }
 
     private fun showLoadError(error: Exception) {
-        val message = "تعذّر تحميل صفحات المصحف أو بيانات التجويد.\n\${error.message ?: ""}"
+        val message = "تعذّر تحميل صفحات المصحف أو بيانات التجويد.\n${error.message ?: ""}"
         setContentView(TextView(this).apply {
             text = message
             textSize = 17f
