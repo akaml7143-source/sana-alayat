@@ -22,7 +22,7 @@ jobs:
           git -C /tmp/madinah-layout sparse-checkout set pages
           git clone --depth 1 --filter=blob:none --sparse --branch main https://github.com/TheAbubakrAbu/Quran-Tajweed-Engine.git /tmp/quran-tajweed
           git -C /tmp/quran-tajweed checkout edd7afc0551d4bbbb14416a661534f595c97bb67
-          git -C /tmp/quran-tajweed sparse-checkout set data/quran.json data/tajweed data/tajweed-rules.json
+          git -C /tmp/quran-tajweed sparse-checkout set --skip-checks data/quran.json data/tajweed data/tajweed-rules.json
           python3 scripts/prepare_quran.py --layout /tmp/madinah-layout/pages --engine-data /tmp/quran-tajweed/data
       - name: Set up Java
         uses: actions/setup-java@v4
