@@ -10,7 +10,7 @@ BASMALA = "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِ
 BASMALA_PREFIX_WORDS = 4
 
 
-def norm_word(value):
+def normalize_char(value):
     out = []
     for char in unicodedata.normalize("NFKD", value):
         if char == "ـ" or char in "۞۩۝ء" or unicodedata.category(char) in ("Mn", "Me", "Cf"):
@@ -27,6 +27,20 @@ def norm_word(value):
             continue
         out.append(char)
     return "".join(out)
+
+
+def norm_word(value):
+    return "".join(normalize_char(char) for char in value)
+
+
+def normalized_with_boundaries(value):
+    normalized = []
+    boundaries = [0] * (len(value) + 1)
+    for index, char in enumerate(value):
+        boundaries[index] = len(normalized)
+        normalized.extend(normalize_char(char))
+    boundaries[len(value)] = len(normalized)
+    return "".join(normalized), boundaries
 
 
 def arabic_digits(number):
@@ -102,17 +116,10 @@ def main():
             if trailing_marker and target_words:
                 target_words[-1] = target_words[-1] + " " + trailing_marker
 
-        source_words = [
-            word for word in re.split(r"\s+", source_text.strip())
-            if word not in ("۞", "۩")
-        ]
-        if len(source_words) != len(target_words):
-            mismatches.append(
-                f"{surah_number}:{ayah_number} word count reference={len(source_words)} source={len(target_words)}"
-            )
-            continue
-        if any(norm_word(a) != norm_word(b) for a, b in zip(source_words, target_words)):
-            mismatches.append(f"{surah_number}:{ayah_number} word spelling/order mismatch")
+        source_normalized = norm_word(source_text)
+        target_normalized = "".join(norm_word(word) for word in target_words)
+        if source_normalized != target_normalized:
+            mismatches.append(f"{surah_number}:{ayah_number} normalized text mismatch")
             continue
         original_words[(surah_number, ayah_number)] = target_words
 
@@ -134,38 +141,45 @@ def main():
                     "description": category.get("shortDescription") or ""
                 })
 
+    verse_texts = {(s, a): text for s, a, text in verses}
+    rule_ranks = {c.get("id"): int(c.get("sortRank", 999)) for c in rules.get("categories", [])}
     word_colors = {}
     for surah_number in range(1, 115):
         annotation_path = Path(args.engine_data) / "tajweed" / f"{surah_number:03d}.json"
         annotation_data = read_json(annotation_path)
         for verse_data in annotation_data:
             ayah_number = int(verse_data["ayah"])
-            source_text = next(
-                text for s, a, text in verses if s == surah_number and a == ayah_number
-            )
-            source_words = [
-                match for match in re.finditer(r"\S+", source_text)
-                if match.group() not in ("۞", "۩")
-            ]
+            key = (surah_number, ayah_number)
+            source_text = verse_texts[key]
+            source_normalized, boundaries = normalized_with_boundaries(source_text)
+            target_words = original_words[key]
+            target_ranges = []
+            cursor = 0
+            for word in target_words:
+                word_length = len(norm_word(word))
+                target_ranges.append((cursor, cursor + word_length))
+                cursor += word_length
+            if cursor != len(source_normalized):
+                raise SystemExit(f"Character alignment failed at {surah_number}:{ayah_number}")
+
             chosen = {}
             for annotation in verse_data.get("annotations", []):
-                start = int(annotation["start"])
-                end = int(annotation["end"])
+                start = max(0, min(int(annotation["start"]), len(source_text)))
+                end = max(start, min(int(annotation["end"]), len(source_text)))
+                start_norm = boundaries[start]
+                end_norm = boundaries[end]
                 rule = annotation.get("rule", "")
-                if rule not in colors:
+                if rule not in colors or end_norm <= start_norm:
                     continue
-                for word_index, match in enumerate(source_words):
-                    overlap = max(0, min(end, match.end()) - max(start, match.start()))
+                for word_index, (word_start, word_end) in enumerate(target_ranges):
+                    overlap = max(0, min(end_norm, word_end) - max(start_norm, word_start))
                     if overlap <= 0:
                         continue
                     previous = chosen.get(word_index)
-                    rank = overlap * 1000 - int(next(
-                        (c.get("sortRank", 999) for c in rules.get("categories", []) if c.get("id") == rule),
-                        999
-                    ))
+                    rank = overlap * 1000 - rule_ranks.get(rule, 999)
                     if previous is None or rank > previous[0]:
                         chosen[word_index] = (rank, colors[rule])
-            word_colors[(surah_number, ayah_number)] = {
+            word_colors[key] = {
                 word_index: color for word_index, (_, color) in chosen.items()
             }
 
