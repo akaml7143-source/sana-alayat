@@ -74,7 +74,7 @@ def main():
     basmala_words = {}
     mismatches = []
     for index, (surah_number, ayah_number, source_text) in enumerate(verses):
-        raw_words = original_lines[index].split()
+        raw_words = re.split(r" +", original_lines[index].strip())
         if ayah_number == 1 and surah_number not in (1, 9):
             if len(raw_words) <= BASMALA_PREFIX_WORDS:
                 mismatches.append(f"{surah_number}:{ayah_number} has no room for basmala prefix")
@@ -88,7 +88,7 @@ def main():
         else:
             target_words = raw_words
 
-        source_words = source_text.split()
+        source_words = re.split(r" +", source_text.strip())
         if len(source_words) != len(target_words):
             mismatches.append(
                 f"{surah_number}:{ayah_number} word count reference={len(source_words)} source={len(target_words)}"
