@@ -75,29 +75,37 @@ def main():
     mismatches = []
     for index, (surah_number, ayah_number, source_text) in enumerate(verses):
         raw_words = re.split(r" +", original_lines[index].strip())
-        marker = ""
+        leading_marker = ""
+        trailing_marker = ""
         if raw_words and raw_words[0] in ("۞", "۩"):
-            marker = raw_words.pop(0)
+            leading_marker = raw_words.pop(0)
+        if raw_words and raw_words[-1] in ("۞", "۩"):
+            trailing_marker = raw_words.pop()
         if ayah_number == 1 and surah_number not in (1, 9):
             if len(raw_words) <= BASMALA_PREFIX_WORDS:
                 mismatches.append(f"{surah_number}:{ayah_number} has no room for basmala prefix")
                 continue
             prefix = raw_words[:BASMALA_PREFIX_WORDS]
             target_words = raw_words[BASMALA_PREFIX_WORDS:]
-            if marker and target_words:
-                target_words[0] = marker + " " + target_words[0]
+            if leading_marker and target_words:
+                target_words[0] = leading_marker + " " + target_words[0]
+            if trailing_marker and target_words:
+                target_words[-1] = target_words[-1] + " " + trailing_marker
             if norm_word("".join(prefix)) != norm_word("".join(BASMALA.split())):
                 mismatches.append(f"{surah_number}:{ayah_number} basmala prefix differs")
                 continue
             basmala_words[surah_number] = " ".join(prefix)
         else:
             target_words = raw_words
-            if marker and target_words:
-                target_words[0] = marker + " " + target_words[0]
+            if leading_marker and target_words:
+                target_words[0] = leading_marker + " " + target_words[0]
+            if trailing_marker and target_words:
+                target_words[-1] = target_words[-1] + " " + trailing_marker
 
-        source_words = re.split(r"\s+", source_text.strip())
-        if source_words and source_words[0] in ("۞", "۩"):
-            source_words = source_words[1:]
+        source_words = [
+            word for word in re.split(r"\s+", source_text.strip())
+            if word not in ("۞", "۩")
+        ]
         if len(source_words) != len(target_words):
             mismatches.append(
                 f"{surah_number}:{ayah_number} word count reference={len(source_words)} source={len(target_words)}"
@@ -135,9 +143,10 @@ def main():
             source_text = next(
                 text for s, a, text in verses if s == surah_number and a == ayah_number
             )
-            source_words = list(re.finditer(r"\S+", source_text))
-            if source_words and source_words[0].group() in ("۞", "۩"):
-                source_words = source_words[1:]
+            source_words = [
+                match for match in re.finditer(r"\S+", source_text)
+                if match.group() not in ("۞", "۩")
+            ]
             chosen = {}
             for annotation in verse_data.get("annotations", []):
                 start = int(annotation["start"])
