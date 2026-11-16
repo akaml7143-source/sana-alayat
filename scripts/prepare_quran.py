@@ -126,7 +126,7 @@ def main():
             source_text = next(
                 text for s, a, text in verses if s == surah_number and a == ayah_number
             )
-            source_words = list(re.finditer(r"\S+", source_text))
+            source_words = list(re.finditer(r"[^ ]+", source_text.strip()))
             chosen = {}
             for annotation in verse_data.get("annotations", []):
                 start = int(annotation["start"])
