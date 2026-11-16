@@ -95,7 +95,7 @@ def main():
             if marker and target_words:
                 target_words[0] = marker + " " + target_words[0]
 
-        source_words = re.split(r"\\s+", source_text.strip())
+        source_words = re.split(r"\s+", source_text.strip())
         if source_words and source_words[0] in ("۞", "۩"):
             source_words = source_words[1:]
         if len(source_words) != len(target_words):
@@ -135,7 +135,7 @@ def main():
             source_text = next(
                 text for s, a, text in verses if s == surah_number and a == ayah_number
             )
-            source_words = list(re.finditer(r"\\S+", source_text))
+            source_words = list(re.finditer(r"\S+", source_text))
             if source_words and source_words[0].group() in ("۞", "۩"):
                 source_words = source_words[1:]
             chosen = {}
