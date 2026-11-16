@@ -1,0 +1,33 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.sanaalayat.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.sanaalayat.app'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    sourceSets {
+        main.assets.srcDir(layout.buildDirectory.dir('generated/quranAssets'))
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+}
+
+tasks.register('copyQuranAsset', Copy) {
+    from(rootProject.file('quran-uthmani-kitab.txt'))
+    into(layout.buildDirectory.dir('generated/quranAssets'))
+}
+tasks.named('preBuild').configure { dependsOn('copyQuranAsset') }
